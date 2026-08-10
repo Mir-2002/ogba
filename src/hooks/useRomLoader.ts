@@ -45,7 +45,7 @@ export function useRomLoader() {
         return
       }
 
-      setState({ isLoading: true, error: null, hasRom: false })
+      setState({ isLoading: true, error: null, hasRom: false, romId: null, romTitle: null })
 
       try {
         const buffer = await readFileAsArrayBuffer(file)
