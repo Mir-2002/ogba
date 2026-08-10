@@ -70,6 +70,10 @@ export function useRomLoader() {
     [play],
   )
 
+  const ejectRom = useCallback(() => {
+    setState({ isLoading: false, error: null, hasRom: false, romId: null, romTitle: null })
+  }, [])
+
   const { romId, romTitle } = state
-  return { state, loadFile, romId, romTitle }
+  return { state, loadFile, ejectRom, romId, romTitle }
 }

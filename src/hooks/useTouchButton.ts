@@ -1,43 +1,42 @@
-import { useContext, useLayoutEffect, useRef } from 'react'
+import { useContext, useEffect, useLayoutEffect, useRef } from 'react'
 import { GbaContext } from 'react-gbajs'
 import type { GbaKeyIndex } from '@/types/gba'
 
 export function useTouchButton(keyIndex: GbaKeyIndex) {
   const { gba } = useContext(GbaContext)
   const ref = useRef<HTMLButtonElement>(null)
+  const gbaRef = useRef(gba)
+
+  // Keep gbaRef current without triggering the layout effect
+  useEffect(() => { gbaRef.current = gba }, [gba])
 
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
 
-    const onPress = (e: Event) => {
+    const onPress = (e: PointerEvent) => {
       e.preventDefault()
+      el.setPointerCapture(e.pointerId)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(gba as any)?.keypad?.keyDown(keyIndex)
+      ;(gbaRef.current as any)?.keypad?.keyDown(keyIndex)
     }
-    const onRelease = (e: Event) => {
-      e.preventDefault()
+    const onRelease = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(gba as any)?.keypad?.keyUp(keyIndex)
+      ;(gbaRef.current as any)?.keypad?.keyUp(keyIndex)
     }
 
-    const opts: AddEventListenerOptions = { passive: false }
-    el.addEventListener('touchstart', onPress, opts)
-    el.addEventListener('touchend', onRelease, opts)
-    el.addEventListener('touchcancel', onRelease, opts)
-    el.addEventListener('mousedown', onPress, opts)
-    el.addEventListener('mouseup', onRelease, opts)
-    el.addEventListener('mouseleave', onRelease, opts)
+    el.addEventListener('pointerdown', onPress)
+    el.addEventListener('pointerup', onRelease)
+    el.addEventListener('pointercancel', onRelease)
+    el.addEventListener('pointerleave', onRelease)
 
     return () => {
-      el.removeEventListener('touchstart', onPress)
-      el.removeEventListener('touchend', onRelease)
-      el.removeEventListener('touchcancel', onRelease)
-      el.removeEventListener('mousedown', onPress)
-      el.removeEventListener('mouseup', onRelease)
-      el.removeEventListener('mouseleave', onRelease)
+      el.removeEventListener('pointerdown', onPress)
+      el.removeEventListener('pointerup', onRelease)
+      el.removeEventListener('pointercancel', onRelease)
+      el.removeEventListener('pointerleave', onRelease)
     }
-  }, [gba, keyIndex])
+  }, [keyIndex]) // gba intentionally removed — use gbaRef instead
 
   return ref
 }

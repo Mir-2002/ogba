@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 
 interface RomLoaderProps {
   onFile: (file: File) => void
@@ -8,6 +8,7 @@ interface RomLoaderProps {
 
 export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -15,11 +16,46 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
     e.target.value = ''
   }
 
+  const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isDragging) setIsDragging(true)
+  }
+
+  const handleDragEnter = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }
+
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <label
         aria-disabled={isLoading ? 'true' : undefined}
-        className="block w-full px-5 py-8 rounded-xl border-2 border-dashed border-white/10 cursor-pointer text-center transition-colors duration-200 hover:border-accent/40 hover:bg-surface aria-disabled:opacity-50 aria-disabled:cursor-not-allowed select-none focus-within:border-accent/60"
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={[
+          'block w-full px-5 py-8 rounded-xl border-2 border-dashed cursor-pointer text-center transition-colors duration-200 select-none focus-within:border-accent/60 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
+          isDragging
+            ? 'border-accent/70 bg-accent/5 rom-drop-zone'
+            : 'border-white/10 hover:border-accent/40 hover:bg-surface',
+        ].join(' ')}
       >
         <input
           ref={inputRef}
@@ -30,7 +66,7 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
           disabled={isLoading}
         />
         <svg
-          className="mx-auto mb-3 text-dim opacity-70"
+          className={['mx-auto mb-3 opacity-70 transition-colors duration-200', isDragging ? 'text-accent' : 'text-dim'].join(' ')}
           width="28" height="28" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" strokeWidth="1.5"
           strokeLinecap="round" strokeLinejoin="round"
@@ -40,6 +76,8 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
         </svg>
         {isLoading ? (
           <span className="text-muted text-sm font-body">Loading ROM…</span>
+        ) : isDragging ? (
+          <span className="block font-body font-semibold text-accent text-sm">Release to load</span>
         ) : (
           <>
             <span className="block font-body font-semibold text-text text-sm">Drop .gba ROM here</span>

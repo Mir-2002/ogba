@@ -38,6 +38,7 @@ export default defineConfig({
   resolve: {
     alias: { '@': resolve(import.meta.dirname, 'src') },
   },
+  server: { host: true },
   build: { target: 'esnext' },
   optimizeDeps: { exclude: ['react-gbajs'] },
 })
