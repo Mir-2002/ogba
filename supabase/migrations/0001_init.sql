@@ -1,3 +1,6 @@
+-- Safe to re-run: tables/buckets use if-not-exists and policies are dropped
+-- before being recreated.
+
 -- Save states table: one row per (user, rom, slot). The blob itself lives in
 -- Storage; this table only tracks metadata + where to find it.
 create table if not exists public.saves (
@@ -13,22 +16,26 @@ create table if not exists public.saves (
 
 alter table public.saves enable row level security;
 
+drop policy if exists "saves_select_own" on public.saves;
 create policy "saves_select_own"
   on public.saves for select
   to authenticated
   using ((select auth.uid()) = user_id);
 
+drop policy if exists "saves_insert_own" on public.saves;
 create policy "saves_insert_own"
   on public.saves for insert
   to authenticated
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "saves_update_own" on public.saves;
 create policy "saves_update_own"
   on public.saves for update
   to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "saves_delete_own" on public.saves;
 create policy "saves_delete_own"
   on public.saves for delete
   to authenticated
@@ -41,6 +48,7 @@ insert into storage.buckets (id, name, public)
 values ('save-states', 'save-states', false)
 on conflict do nothing;
 
+drop policy if exists "save_states_select_own" on storage.objects;
 create policy "save_states_select_own"
   on storage.objects for select
   to authenticated
@@ -49,6 +57,7 @@ create policy "save_states_select_own"
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
+drop policy if exists "save_states_insert_own" on storage.objects;
 create policy "save_states_insert_own"
   on storage.objects for insert
   to authenticated
@@ -57,6 +66,7 @@ create policy "save_states_insert_own"
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
+drop policy if exists "save_states_update_own" on storage.objects;
 create policy "save_states_update_own"
   on storage.objects for update
   to authenticated
@@ -69,6 +79,7 @@ create policy "save_states_update_own"
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
+drop policy if exists "save_states_delete_own" on storage.objects;
 create policy "save_states_delete_own"
   on storage.objects for delete
   to authenticated
