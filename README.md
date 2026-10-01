@@ -25,10 +25,27 @@ A full-stack, browser-based **Game Boy Advance emulator** with cloud save states
 
 Backend is [Supabase](https://supabase.com): Postgres (with row-level security) for save metadata, Storage for the compressed save-state blobs, and Auth (Google OAuth, redirect flow) for sign-in. There is no server code — the browser talks to Supabase directly via `@supabase/supabase-js`.
 
-1. Create a Supabase project.
-2. Run `supabase/migrations/0001_init.sql` in the SQL editor — creates the `saves` table + RLS policies and the private `save-states` storage bucket + its policies.
-3. In **Authentication → Sign In / Providers**, enable Google and set up a Google OAuth client whose authorized redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
-4. In **Authentication → URL Configuration**, set the Site URL and add redirect URLs for `http://localhost:5173` and your deployed domain(s).
-5. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Project Settings → API). Set the same two variables on Vercel for deployment.
+### Local development (Supabase CLI + Docker)
+
+The CLI is a dev dependency, and `supabase/config.toml` is already set up: auth URLs point at Vite, and Google is enabled.
+
+1. Create a Google OAuth client (Google Cloud Console → APIs & Services → Credentials, type **Web application**) with the authorized redirect URI `http://127.0.0.1:54321/auth/v1/callback`.
+2. Put its credentials in the root `.env` (gitignored; see `.env.example`):
+   ```
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
+   ```
+3. Start Docker Desktop, then run `npm run db:start`. The first run pulls the images and applies `supabase/migrations/`, which creates the `saves` table, its RLS policies and the private `save-states` bucket.
+4. Copy the **API URL** and **anon key** from `npm run db:status` into `.env.local` as `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+5. Run `npm run dev` and open `http://localhost:5173`. Studio is at `http://127.0.0.1:54323`.
+
+`npm run db:reset` rebuilds the database from the migrations. `npm run db:stop` shuts the stack down.
+
+### Hosted (production)
+
+1. Create a Supabase project, then run `npx supabase link` and `npx supabase db push`, or paste `supabase/migrations/0001_init.sql` into the SQL editor.
+2. In **Authentication → Sign In / Providers**, enable Google. The production Google OAuth client needs the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`.
+3. In **Authentication → URL Configuration**, set the Site URL to your deployed domain and add it, plus any preview domains, to the redirect URLs.
+4. Set `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Project Settings → API) on Vercel.
 
 ---
