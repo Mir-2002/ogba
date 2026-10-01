@@ -33,6 +33,15 @@ interface PanelContentProps {
   busy: boolean
   saveError: string | null
   listError: string | null
+
+  // Mobile only — desktop has no skin.
+  skin?: {
+    name:       string | null
+    isCustom:   boolean
+    error:      string | null
+    importSkin: (file: File) => void
+    resetSkin:  () => void
+  }
 }
 
 function SectionHeading({ children }: { children: string }) {
@@ -48,6 +57,7 @@ export function PanelContent({
   user, authLoading, authError, signIn, signOut,
   volume, setVolume, isMuted, toggleMute,
   save, load, listSlots, busy, saveError, listError,
+  skin,
 }: PanelContentProps) {
   return (
     <div className="flex flex-col gap-5">
@@ -159,6 +169,44 @@ export function PanelContent({
           )
         )}
       </section>
+
+      {/* Skin */}
+      {skin && (
+        <section>
+          <SectionHeading>Skin</SectionHeading>
+          {skin.error && (
+            <p className="text-danger text-xs mb-2 m-0 font-body break-words">{skin.error}</p>
+          )}
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-body text-xs text-muted truncate">
+              {skin.name ?? 'No skin'}{skin.isCustom ? ' (imported)' : ''}
+            </span>
+            <div className="shrink-0 flex gap-2">
+              {skin.isCustom && (
+                <button
+                  onClick={() => skin.resetSkin()}
+                  className="text-[10px] font-pixel text-muted hover:text-paper bg-transparent border-none cursor-pointer px-1"
+                >
+                  Reset
+                </button>
+              )}
+              <label className="text-[10px] font-pixel text-paper bg-shell rounded-sm px-3 py-1.5 cursor-pointer btn-raised active:btn-pressed">
+                Import
+                <input
+                  type="file"
+                  accept=".deltaskin"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) skin.importSkin(file)
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+      )}
 
     </div>
   )

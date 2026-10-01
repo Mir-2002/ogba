@@ -9,8 +9,9 @@ export interface EmulatorState {
 }
 
 export interface EmulatorApi extends EmulatorState {
-  // Attach to the <canvas> that mGBA renders into. Init happens once this fires.
-  canvasRef:    (node: HTMLCanvasElement | null) => void
+  // Attach to the element that should hold the emulator's (single, shared)
+  // canvas; the canvas is moved into it. Init happens the first time this fires.
+  screenHostRef: (node: HTMLElement | null) => void
   loadRom:      (bytes: Uint8Array, fileName: string) => Promise<boolean>
   ejectRom:     () => void
   press:        (button: GbaButton) => void

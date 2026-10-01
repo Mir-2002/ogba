@@ -13,9 +13,8 @@
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;
   --font-body:  'DM Sans', system-ui, sans-serif;
 
-  /* GBA indigo shell */
+  /* GBA indigo accent */
   --color-shell:       #4b2e83;
-  --color-shell-dark:  #2e1b57;
   --color-shell-light: #8166c2;
 
   /* Screen bezel / panel ink */
@@ -26,23 +25,11 @@
   --color-paper: #f4f1fa;
   --color-muted: #a79fc9;
 
-  /* Power LED glow (lit while a ROM is running) + error red */
-  --color-led:    #3ddc84;
+  /* Error red */
   --color-danger: #f2555b;
 }
 
-/* Moulded plastic: soft highlight along the top edge, shadow pooling at the
-   bottom, the whole shell lifted off the page. */
-@utility shell-bevel {
-  box-shadow:
-    inset 0 2px 0 0 var(--color-shell-light),
-    inset 0 -8px 16px 0 rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
-    0 1px 0 0 var(--color-shell-dark),
-    0 16px 32px rgba(0, 0, 0, 0.55);
-}
-
-/* Black glass sunk into the shell. */
+/* Black glass bezel around the desktop screen. */
 @utility bezel-inset {
   box-shadow:
     inset 0 0 0 3px #000,

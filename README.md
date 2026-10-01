@@ -13,11 +13,11 @@ A full-stack, browser-based **Game Boy Advance emulator** with cloud save states
 - **Cloud save states** — 3 save slots per game, persisted to Supabase Postgres (metadata) + Supabase Storage (compressed state blobs), synced across devices
 - **Google sign-in** — OAuth via Supabase Auth's redirect flow; row-level security scopes every save to its owner
 - **Full keyboard controls** — arrows, Z/X (B/A), Enter (Start), Backspace (Select), Q/E (L/R)
-- **Retro console shell UI** — the whole app is themed as a purple/black/white handheld, with on-screen D-pad, A/B, Select/Start, and L/R shoulder buttons built with the Pointer Events API (`setPointerCapture` for reliable input even when fingers drift); clickable with a mouse on desktop too, not just touch
+- **Delta skins on mobile**: phones and tablets render a [Delta](https://github.com/rileytestut/Delta) `.deltaskin` (default: DarkSP). PDF artwork is rasterized crisply at the device's pixel density and cached, with multi-touch input from the skin's own button frames, sliding between buttons, D-pad diagonals and haptics where supported. Import your own skin from the menu
 - **Installable & offline** — a service worker precaches the app and the mGBA core, so repeat visits load instantly and games run without a connection (cloud saves need one)
 - **Pause / resume** — pause overlay directly on the game canvas
 - **Volume control** — mute toggle and slider, persisted across sessions
-- **Responsive layout** — console shell centred beside a side panel on desktop; full-viewport portrait shell with a slide-up menu drawer (account, cartridge, audio, save states) on mobile
+- **Responsive layout**: desktop shows just the game screen beside a side panel (keyboard play); mobile shows the skin, with its menu button opening a drawer (account, cartridge, audio, save states, skin) that pauses the game
 
 ---
 

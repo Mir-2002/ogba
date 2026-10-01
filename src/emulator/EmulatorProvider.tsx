@@ -59,6 +59,26 @@ function stateFilePath(mod: mGBAEmulator, slot: number, forWrite: boolean): stri
 // dance and guarantee mGBA({ canvas }) is only ever called once per page load.
 let modulePromise: Promise<mGBAEmulator> | null = null
 
+// mGBA stays bound to the canvas it was created with, so the app owns exactly
+// one and layouts *move* it (desktop screen <-> mobile skin) instead of each
+// rendering their own <canvas>, which would orphan the emulator on remount.
+let sharedCanvas: HTMLCanvasElement | null = null
+
+function getSharedCanvas(): HTMLCanvasElement {
+  if (!sharedCanvas) {
+    sharedCanvas = document.createElement('canvas')
+    sharedCanvas.width  = 240
+    sharedCanvas.height = 160
+    Object.assign(sharedCanvas.style, {
+      display:        'block',
+      width:          '100%',
+      height:         '100%',
+      imageRendering: 'pixelated',
+    })
+  }
+  return sharedCanvas
+}
+
 function getOrCreateModule(canvas: HTMLCanvasElement): Promise<mGBAEmulator> {
   if (!modulePromise) {
     modulePromise = mGBA({ canvas }).then(async (mod) => {
@@ -96,8 +116,15 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
     }, FS_SYNC_DEBOUNCE_MS)
   }, [])
 
-  const canvasRef = useCallback((canvas: HTMLCanvasElement | null) => {
-    if (!canvas) return
+  const initStartedRef = useRef(false)
+
+  const screenHostRef = useCallback((host: HTMLElement | null) => {
+    if (!host) return
+    const canvas = getSharedCanvas()
+    if (canvas.parentElement !== host) host.prepend(canvas)
+
+    if (initStartedRef.current) return
+    initStartedRef.current = true
 
     if (!window.crossOriginIsolated) {
       setState((s) => ({
@@ -246,7 +273,7 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
 
   const api = useMemo<EmulatorApi>(() => ({
     ...state,
-    canvasRef,
+    screenHostRef,
     loadRom,
     ejectRom,
     press,
@@ -256,7 +283,7 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
     setVolume,
     exportState,
     importState,
-  }), [state, canvasRef, loadRom, ejectRom, press, release, pause, resume, setVolume, exportState, importState])
+  }), [state, screenHostRef, loadRom, ejectRom, press, release, pause, resume, setVolume, exportState, importState])
 
   return (
     <EmulatorContext.Provider value={api}>

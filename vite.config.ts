@@ -49,12 +49,19 @@ const pwaPlugin = VitePWA({
   },
   workbox: {
     globPatterns: ['**/*.{js,css,html,wasm,woff2,png,svg,ico}'],
+    // The Delta skin (~3 MB) and pdf.js (~1.7 MB) are only used by the mobile
+    // layout, so desktop shouldn't download them: cache them on first use.
+    globIgnores: ['**/pdf*.js', '**/pdf*.mjs'],
     // mgba.wasm is ~1.8 MB, just under Workbox's 2 MiB default; leave headroom
     // so a bigger core release doesn't silently fall out of the precache
-
     maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
     navigateFallback: 'index.html',
     runtimeCaching: [
+      {
+        urlPattern: ({ url }) => url.pathname.startsWith('/skins/') || /^\/assets\/pdf.*\.m?js$/.test(url.pathname),
+        handler: 'CacheFirst',
+        options: { cacheName: 'ogba-skin-assets' },
+      },
       {
         urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co'),
         handler: 'NetworkOnly',
