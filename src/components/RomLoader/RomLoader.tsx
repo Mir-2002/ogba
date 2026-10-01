@@ -51,10 +51,10 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={[
-          'block w-full px-5 py-8 rounded-xl border-2 border-dashed cursor-pointer text-center transition-colors duration-200 select-none focus-within:border-accent/60 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
+          'block w-full px-5 py-8 rounded-sm border-2 border-dashed cursor-pointer text-center transition-colors duration-200 select-none focus-within:border-shell-light aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
           isDragging
-            ? 'border-accent/70 bg-accent/5 rom-drop-zone'
-            : 'border-white/10 hover:border-accent/40 hover:bg-surface',
+            ? 'border-shell-light bg-shell/20'
+            : 'border-muted/30 hover:border-shell-light hover:bg-ink-soft',
         ].join(' ')}
       >
         <input
@@ -66,7 +66,7 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
           disabled={isLoading}
         />
         <svg
-          className={['mx-auto mb-3 opacity-70 transition-colors duration-200', isDragging ? 'text-accent' : 'text-dim'].join(' ')}
+          className={['mx-auto mb-3 opacity-70 transition-colors duration-200', isDragging ? 'text-shell-light' : 'text-muted'].join(' ')}
           width="28" height="28" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" strokeWidth="1.5"
           strokeLinecap="round" strokeLinejoin="round"
@@ -77,16 +77,16 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
         {isLoading ? (
           <span className="text-muted text-sm font-body">Loading ROM…</span>
         ) : isDragging ? (
-          <span className="block font-body font-semibold text-accent text-sm">Release to load</span>
+          <span className="block font-body font-semibold text-shell-light text-sm">Release to load</span>
         ) : (
           <>
-            <span className="block font-body font-semibold text-text text-sm">Drop .gba ROM here</span>
+            <span className="block font-body font-semibold text-paper text-sm">Drop .gba ROM here</span>
             <span className="block text-xs mt-1 text-muted font-body">or tap to browse</span>
           </>
         )}
       </label>
       {error && (
-        <p role="alert" className="text-red text-xs text-center m-0 font-body">{error}</p>
+        <p role="alert" className="text-danger text-xs text-center m-0 font-body">{error}</p>
       )}
     </div>
   )

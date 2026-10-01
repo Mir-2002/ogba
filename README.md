@@ -13,10 +13,10 @@ A full-stack, browser-based **Game Boy Advance emulator** with cloud save states
 - **Cloud save states** — 3 save slots per game, persisted to Supabase Postgres (metadata) + Supabase Storage (compressed state blobs), synced across devices
 - **Google sign-in** — OAuth via Supabase Auth's redirect flow; row-level security scopes every save to its owner
 - **Full keyboard controls** — arrows, Z/X (B/A), Enter (Start), Backspace (Select), Q/E (L/R)
-- **Mobile touch controls** — D-pad, A/B, Select/Start, and L/R shoulder buttons built with the Pointer Events API (`setPointerCapture` for reliable input even when fingers drift)
+- **Retro console shell UI** — the whole app is themed as a purple/black/white handheld, with on-screen D-pad, A/B, Select/Start, and L/R shoulder buttons built with the Pointer Events API (`setPointerCapture` for reliable input even when fingers drift); clickable with a mouse on desktop too, not just touch
 - **Pause / resume** — pause overlay directly on the game canvas
 - **Volume control** — mute toggle and slider, persisted across sessions
-- **Responsive layout** — sidebar on desktop; slide-up save drawer + FAB on mobile
+- **Responsive layout** — console shell centred beside a side panel on desktop; full-viewport portrait shell with a slide-up menu drawer (account, cartridge, audio, save states) on mobile
 
 ---
 

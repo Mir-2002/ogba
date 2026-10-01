@@ -46,16 +46,16 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
 
   return (
     <div className="w-full shrink-0">
-      <p className="text-[10px] font-mono uppercase tracking-wider text-dim mb-2 m-0">Save States</p>
+      <p className="text-[10px] font-pixel uppercase tracking-wider text-paper mb-2 m-0">Save States</p>
 
       {listError && (
-        <p className="text-red text-xs mb-2 m-0">{listError}</p>
+        <p className="text-danger text-xs mb-2 m-0 font-body">{listError}</p>
       )}
 
       <div className="flex flex-col gap-1.5">
         {slotsLoading
           ? SLOTS.map((n) => (
-              <div key={n} className="animate-pulse bg-surface2 rounded h-12" />
+              <div key={n} className="animate-pulse bg-ink-soft rounded-sm h-12" />
             ))
           : SLOTS.map((n) => {
               const meta = slots[n - 1]
@@ -65,12 +65,12 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
               return (
                 <div
                   key={n}
-                  className="flex items-center gap-2 bg-surface rounded-lg px-3 py-2 border border-white/[0.07] save-slot-card"
+                  className="flex items-center gap-2 bg-ink-soft rounded-sm px-3 py-2 text-muted pixel-border"
                 >
-                  <span className="w-4 font-mono text-xs text-dim shrink-0">{n}</span>
-                  <span className="flex-1 font-mono text-xs text-muted">
+                  <span className="w-4 font-pixel text-[9px] text-muted shrink-0">{n}</span>
+                  <span className="flex-1 font-body text-xs text-muted">
                     {isSaved ? (
-                      <span className="flex items-center gap-1 text-green">
+                      <span className="flex items-center gap-1 text-led">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
@@ -87,13 +87,13 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
                     <>
                       <button
                         onClick={() => handleConfirmLoad(n)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-green text-bg cursor-pointer border-none"
+                        className="px-2 py-1 rounded-sm text-[9px] font-pixel bg-led text-ink cursor-pointer border-none btn-raised active:btn-pressed"
                       >
                         Confirm
                       </button>
                       <button
                         onClick={() => setPendingLoad(null)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-surface2 text-muted cursor-pointer border border-white/[0.07]"
+                        className="px-2 py-1 rounded-sm text-[9px] font-pixel bg-ink text-muted cursor-pointer btn-raised active:btn-pressed"
                       >
                         Cancel
                       </button>
@@ -103,14 +103,14 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
                       <button
                         disabled={!hasRom || busy}
                         onClick={() => handleSave(n)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-accent text-white cursor-pointer disabled:opacity-30 disabled:cursor-default border-none shadow-[0_4px_12px_rgba(108,99,255,0.35)] active:neu-button-pressed"
+                        className="px-2 py-1 rounded-sm text-[9px] font-pixel bg-shell-light text-paper cursor-pointer disabled:opacity-30 disabled:cursor-default border-none btn-raised active:btn-pressed"
                       >
                         Save
                       </button>
                       <button
                         disabled={busy || !meta}
                         onClick={() => setPendingLoad(n)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-surface2 text-muted cursor-pointer disabled:opacity-30 disabled:cursor-default border border-white/[0.07] shadow-[inset_1px_1px_4px_rgba(0,0,0,0.5)]"
+                        className="px-2 py-1 rounded-sm text-[9px] font-pixel bg-ink text-muted cursor-pointer disabled:opacity-30 disabled:cursor-default btn-raised active:btn-pressed"
                       >
                         Load
                       </button>
@@ -120,7 +120,7 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
               )
             })}
       </div>
-      {error && <p className="mt-2 text-[10px] text-red m-0">{error}</p>}
+      {error && <p className="mt-2 text-[10px] text-danger m-0 font-body">{error}</p>}
     </div>
   )
 }

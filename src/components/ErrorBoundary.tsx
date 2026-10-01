@@ -23,12 +23,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div role="alert" className="min-h-screen bg-bg flex items-center justify-center">
-          <div className="bg-surface gba-card rounded-2xl p-6 max-w-md text-center">
-            <p className="text-red text-sm mb-4">Something went wrong: {this.state.message}</p>
+        <div role="alert" className="min-h-screen bg-ink flex items-center justify-center p-4">
+          <div className="bg-ink-soft pixel-border text-paper rounded-sm p-6 max-w-md text-center">
+            <p className="text-danger text-sm mb-4 font-body">Something went wrong: {this.state.message}</p>
             <button
               onClick={this.handleReset}
-              className="bg-accent text-white rounded-lg px-4 py-2 neu-button active:neu-button-pressed border-none cursor-pointer"
+              className="bg-shell-light text-paper font-pixel text-xs rounded-sm px-4 py-2 btn-raised active:btn-pressed border-none cursor-pointer"
             >
               Try Again
             </button>

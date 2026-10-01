@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type RefObject } from 'react'
 import { useGbaScale } from '@/hooks/useGbaScale'
 import { useEmulator } from '@/emulator/useEmulator'
 import { PauseButton } from './PauseButton'
@@ -6,10 +6,16 @@ import { PauseButton } from './PauseButton'
 interface GameScreenProps {
   hasRom: boolean
   volume: number
+  // Mobile only: tap the empty screen to open the menu drawer, where the
+  // ROM loader lives as the primary action.
+  onRequestLoad: () => void
+  // The slot ConsoleShell lays out for the screen — sized by flex layout,
+  // independent of the canvas itself, so measuring it can't be circular.
+  containerRef: RefObject<HTMLElement | null>
 }
 
-export function GameScreen({ hasRom, volume }: GameScreenProps) {
-  const scale = useGbaScale(hasRom)
+export function GameScreen({ hasRom, volume, onRequestLoad, containerRef }: GameScreenProps) {
+  const scale = useGbaScale(containerRef)
   const { canvasRef, ready, initError, setVolume } = useEmulator()
 
   useEffect(() => {
@@ -17,41 +23,36 @@ export function GameScreen({ hasRom, volume }: GameScreenProps) {
   }, [ready, volume, setVolume])
 
   return (
-    <div className="rounded-2xl bg-surface gba-card p-4 lg:p-5 shrink-0 relative">
-      {/* Shoulder notch decorations */}
-      <div className="absolute top-0 left-4 w-6 h-2 bg-surface2 rounded-b" />
-      <div className="absolute top-0 right-4 w-6 h-2 bg-surface2 rounded-b" />
-
-      {/* Speaker grille — right side */}
-      <div
-        className="absolute right-3 top-1/2 -translate-y-1/2 grid gap-[3px]"
-        style={{ gridTemplateColumns: 'repeat(3, 4px)', gridTemplateRows: 'repeat(10, 4px)' }}
-        aria-hidden="true"
-      >
-        {Array.from({ length: 30 }).map((_, i) => (
-          <div key={i} className="bg-dim opacity-20 rounded-full w-1 h-1" />
-        ))}
-      </div>
-
-      <div className="rounded-lg bg-[#050508] screen-bezel relative overflow-hidden leading-[0]">
-        {!hasRom && !initError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center text-dim text-xs font-mono pointer-events-none select-none">
+    <div className="rounded-sm bg-ink bezel-inset relative overflow-hidden leading-[0]">
+      {!hasRom && !initError && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center p-3">
+          <span className="font-pixel text-paper text-[9px] sm:text-[10px] leading-relaxed select-none">
+            NO CARTRIDGE
+          </span>
+          <button
+            type="button"
+            onClick={onRequestLoad}
+            className="lg:hidden pointer-events-auto font-pixel text-[9px] text-ink bg-paper rounded-sm px-3 py-2 border-none cursor-pointer btn-raised active:btn-pressed"
+          >
+            LOAD ROM
+          </button>
+          <span className="hidden lg:block font-body text-muted text-xs select-none">
             Load a ROM to begin
-          </div>
-        )}
-        {initError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center text-center text-red text-xs font-mono p-4 pointer-events-none select-none">
-            {initError}
-          </div>
-        )}
-        <canvas
-          ref={canvasRef}
-          width={240}
-          height={160}
-          style={{ width: 240 * scale, height: 160 * scale, imageRendering: 'pixelated' }}
-        />
-        <PauseButton />
-      </div>
+          </span>
+        </div>
+      )}
+      {initError && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center text-center text-paper text-[10px] font-pixel leading-relaxed p-4 pointer-events-none select-none">
+          {initError}
+        </div>
+      )}
+      <canvas
+        ref={canvasRef}
+        width={240}
+        height={160}
+        style={{ width: 240 * scale, height: 160 * scale, imageRendering: 'pixelated' }}
+      />
+      <PauseButton />
     </div>
   )
 }

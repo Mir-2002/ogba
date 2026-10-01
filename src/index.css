@@ -1,10 +1,6 @@
 /* Self-hosted — Google Fonts' CDN is blocked under the COEP: require-corp
    header mGBA's WASM worker/SharedArrayBuffer needs. */
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/500.css';
-@import '@fontsource/jetbrains-mono/600.css';
-@import '@fontsource/jetbrains-mono/700.css';
-@import '@fontsource/jetbrains-mono/400-italic.css';
+@import '@fontsource/press-start-2p/400.css';
 @import '@fontsource/dm-sans/400.css';
 @import '@fontsource/dm-sans/500.css';
 @import '@fontsource/dm-sans/700.css';
@@ -12,46 +8,73 @@
 @import "tailwindcss";
 
 @theme {
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  /* Pixel face for wordmarks / headings / button legends — small sizes only.
+     Body face for anything meant to be read at length. */
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+  --font-body:  'DM Sans', system-ui, sans-serif;
 
-  --color-bg:       #0d0f16;
-  --color-surface:  #161a25;
-  --color-surface2: #1e2235;
-  --color-text:     #e2e8f0;
-  --color-muted:    #8892a4;
-  --color-dim:      #4a5568;
-  --color-accent:   #6c63ff;
-  --color-green:    #48bb78;
-  --color-red:      #f56565;
+  /* GBA indigo shell */
+  --color-shell:       #4b2e83;
+  --color-shell-dark:  #2e1b57;
+  --color-shell-light: #8166c2;
+
+  /* Screen bezel / panel ink */
+  --color-ink:      #0b0a10;
+  --color-ink-soft: #18141f;
+
+  /* Paper white + readable lavender-grey (AA on ink) */
+  --color-paper: #f4f1fa;
+  --color-muted: #a79fc9;
+
+  /* Power LED glow (lit while a ROM is running) + error red */
+  --color-led:    #3ddc84;
+  --color-danger: #f2555b;
 }
 
-@utility gba-card {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+/* Moulded plastic: soft highlight along the top edge, shadow pooling at the
+   bottom, the whole shell lifted off the page. */
+@utility shell-bevel {
+  box-shadow:
+    inset 0 2px 0 0 var(--color-shell-light),
+    inset 0 -8px 16px 0 rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 1px 0 0 var(--color-shell-dark),
+    0 16px 32px rgba(0, 0, 0, 0.55);
 }
 
-@utility screen-bezel {
-  box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.95);
+/* Black glass sunk into the shell. */
+@utility bezel-inset {
+  box-shadow:
+    inset 0 0 0 3px #000,
+    inset 0 6px 20px rgba(0, 0, 0, 0.9),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.05);
 }
 
-@utility rom-drop-zone {
-  box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6), inset -4px -4px 10px rgba(255,255,255,0.03);
+/* Chunky console button, popped up... */
+@utility btn-raised {
+  box-shadow:
+    0 3px 0 0 rgba(0, 0, 0, 0.45),
+    0 6px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-@utility save-slot-card {
-  box-shadow: 3px 3px 8px rgba(0,0,0,0.5), -2px -2px 6px rgba(255,255,255,0.025);
+/* ...and pushed in when held. */
+@utility btn-pressed {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.65);
+  transform: translateY(3px);
 }
 
-@utility neu-button {
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.6), -1px -1px 4px rgba(255,255,255,0.03);
-}
-
-@utility neu-button-pressed {
-  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(255,255,255,0.025);
-}
-
-@utility app-header {
-  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.3);
+/* Stepped 2px pixel-art frame — notched corners instead of rounded ones.
+   Border colour follows `currentColor` so it adapts to context (text-paper,
+   text-shell-light, …). */
+@utility pixel-border {
+  border: 2px solid currentColor;
+  clip-path: polygon(
+    0 8px, 8px 8px, 8px 0,
+    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
+  );
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -59,8 +82,8 @@
 html, body, #root {
   margin: 0; padding: 0;
   width: 100%; height: 100%;
-  background: #0d0f16;
-  color: #e2e8f0;
+  background: var(--color-ink);
+  color: var(--color-paper);
   font-family: 'DM Sans', system-ui, sans-serif;
   overflow: hidden;
 }

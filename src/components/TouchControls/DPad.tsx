@@ -89,9 +89,9 @@ export function DPad() {
 
   const armClass = (dir: Direction, position: string) =>
     [
-      'bg-surface border border-white/10 pointer-events-none transition-colors duration-75 neu-button',
+      'bg-ink pointer-events-none transition-colors duration-75 btn-raised',
       position,
-      activeDirs.has(dir) ? 'neu-button-pressed bg-surface2' : '',
+      activeDirs.has(dir) ? 'btn-pressed bg-ink-soft' : '',
     ].join(' ')
 
   return (
@@ -99,16 +99,16 @@ export function DPad() {
       ref={containerRef}
       role="group"
       aria-label="D-pad"
-      className="relative grid [grid-template-columns:repeat(3,44px)] [grid-template-rows:repeat(3,44px)] touch-none select-none cursor-pointer"
+      className="relative grid [grid-template-columns:repeat(3,40px)] [grid-template-rows:repeat(3,40px)] touch-none select-none cursor-pointer"
     >
-      <div className={armClass('Up', '[grid-column:2] [grid-row:1] rounded-t')} />
+      <div className={armClass('Up', '[grid-column:2] [grid-row:1] rounded-t-sm')} />
       {/* Center disc */}
       <div className="[grid-column:2] [grid-row:2] flex items-center justify-center pointer-events-none">
-        <div className="w-8 h-8 bg-[#0a0c12] rounded-full" />
+        <div className="w-7 h-7 bg-ink rounded-full" />
       </div>
-      <div className={armClass('Left', '[grid-column:1] [grid-row:2] rounded-l')} />
-      <div className={armClass('Right', '[grid-column:3] [grid-row:2] rounded-r')} />
-      <div className={armClass('Down', '[grid-column:2] [grid-row:3] rounded-b')} />
+      <div className={armClass('Left', '[grid-column:1] [grid-row:2] rounded-l-sm')} />
+      <div className={armClass('Right', '[grid-column:3] [grid-row:2] rounded-r-sm')} />
+      <div className={armClass('Down', '[grid-column:2] [grid-row:3] rounded-b-sm')} />
     </div>
   )
 }
