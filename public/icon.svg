@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="crispEdges">
+  <!-- Purple shell -->
+  <rect width="512" height="512" fill="#4b2e83"/>
+  <rect x="32" y="112" width="448" height="288" rx="64" fill="#5b3a9b"/>
+  <!-- Screen bezel + screen -->
+  <rect x="160" y="152" width="192" height="144" fill="#0b0a10"/>
+  <rect x="176" y="168" width="160" height="112" fill="#f4f1fa"/>
+  <!-- D-pad -->
+  <rect x="88" y="200" width="24" height="72" fill="#0b0a10"/>
+  <rect x="64" y="224" width="72" height="24" fill="#0b0a10"/>
+  <!-- A / B -->
+  <rect x="400" y="200" width="32" height="32" fill="#2e1b57"/>
+  <rect x="368" y="240" width="32" height="32" fill="#2e1b57"/>
+  <!-- Power LED -->
+  <rect x="136" y="160" width="8" height="8" fill="#3ddc84"/>
+  <!-- Select / Start -->
+  <rect x="200" y="328" width="40" height="12" fill="#0b0a10"/>
+  <rect x="272" y="328" width="40" height="12" fill="#0b0a10"/>
+</svg>
