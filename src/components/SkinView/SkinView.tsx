@@ -72,9 +72,10 @@ export function SkinView({ skin, skinError, hasRom, onMenu }: SkinViewProps) {
     const scale = vw / mw
     const skinH = mh * scale
     const skinBox = { left: 0, top: vh - skinH, width: vw, height: skinH }
+    // Centred in the space between the safe-area top and the skin, so any
+    // spare height on tall phones splits evenly above and below the screen.
     const screenBox = fitScreen({ left: 0, top: safeTop, width: vw, height: Math.max(0, vh - skinH - safeTop) })
-    // Sit the screen at the top of its area rather than floating mid-gap.
-    return { scale, skinBox, screenBox: { ...screenBox, top: safeTop }, skinOnTop: false }
+    return { scale, skinBox, screenBox, skinOnTop: false }
   }, [rep, viewport])
 
   // Rasterize the artwork at the box's device-pixel width (rounded so small
