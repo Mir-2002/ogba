@@ -1,51 +1,50 @@
-# ogba
+<p align="center">
+  <img src="./src/assets/oGBAlogo.png" alt="oGBA" width="240" />
+</p>
 
-A full-stack, browser-based **Game Boy Advance emulator** with cloud save states. Load any `.gba` ROM and pick up where you left off from any device — no installation required.
-
-![ogba screenshot](./src/assets/hero.png)
-
----
-
-## Features
-
-- **mGBA compiled to WebAssembly** — a fast, accurate native core (not a JS interpreter) running in a cross-origin-isolated worker, with local battery saves and auto-resume persisted to IndexedDB even before you sign in
-- **Drag-and-drop ROM loading** — drop any `.gba` file onto the loader; the ROM title and game code are parsed directly from the binary header (offsets `0xA0`–`0xB0`)
-- **Cloud save states** — 3 save slots per game, persisted to Supabase Postgres (metadata) + Supabase Storage (compressed state blobs), synced across devices
-- **Google sign-in** — OAuth via Supabase Auth's redirect flow; row-level security scopes every save to its owner
-- **Full keyboard controls** — arrows, Z/X (B/A), Enter (Start), Backspace (Select), Q/E (L/R)
-- **Delta skins on mobile**: phones and tablets render a [Delta](https://github.com/rileytestut/Delta) `.deltaskin` (default: DarkSP). PDF artwork is rasterized crisply at the device's pixel density and cached, with multi-touch input from the skin's own button frames, sliding between buttons, D-pad diagonals and haptics where supported. Import your own skin from the menu
-- **Installable & offline** — a service worker precaches the app and the mGBA core, so repeat visits load instantly and games run without a connection (cloud saves need one)
-- **Pause / resume** — pause overlay directly on the game canvas
-- **Volume control** — mute toggle and slider, persisted across sessions
-- **Responsive layout**: desktop shows just the game screen beside a side panel (keyboard play); mobile shows the skin, with its menu button opening a drawer (account, cartridge, audio, save states, skin) that pauses the game
+<p align="center">
+  <strong>Play Game Boy Advance games in your browser, on any device, and pick up where you left off.</strong>
+  <br />
+  <a href="https://ogba-nine.vercel.app">ogba-nine.vercel.app</a>
+</p>
 
 ---
 
-## Setup
+oGBA is a GBA emulator that runs entirely in the browser. Open the page, load a `.gba` file, and play. There's nothing to install. It feels like a handheld on your phone and stays out of the way on your desktop, and your progress follows you between the two.
 
-Backend is [Supabase](https://supabase.com): Postgres (with row-level security) for save metadata, Storage for the compressed save-state blobs, and Auth (Google OAuth, redirect flow) for sign-in. There is no server code — the browser talks to Supabase directly via `@supabase/supabase-js`.
+## Highlights
 
-### Local development (Supabase CLI + Docker)
+- **Full-speed emulation.** oGBA runs [mGBA](https://mgba.io), one of the most accurate GBA emulators, compiled to WebAssembly. Games run at full speed on laptops and phones alike.
+- **A real handheld feel on mobile.** Phones and tablets get a [Delta](https://github.com/rileytestut/Delta)-style controller skin with multi-touch, D-pad diagonals, thumb-sliding between buttons and haptic taps. Rotate to landscape for a full-screen view with translucent controls. You can import any GBA `.deltaskin` from the menu.
+- **A clean desktop view.** On a computer you get the game screen as large as it fits at a crisp scale, a side panel, and keyboard controls.
+- **Saves that follow you.** Sign in with Google to get three cloud save slots per game, so you can save on your laptop and continue on your phone.
+- **Nothing lost on reload.** In-game saves and an automatic resume point are kept on your device, even when you're not signed in.
+- **Installable and works offline.** Add oGBA to your home screen. After the first visit it loads instantly and plays without a connection; only cloud saves need one.
 
-The CLI is a dev dependency, and `supabase/config.toml` is already set up: auth URLs point at Vite, and Google is enabled.
+## Controls
 
-1. Create a Google OAuth client (Google Cloud Console → APIs & Services → Credentials, type **Web application**) with the authorized redirect URI `http://127.0.0.1:54321/auth/v1/callback`.
-2. Put its credentials in the root `.env` (gitignored; see `.env.example`):
-   ```
-   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
-   SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
-   ```
-3. Start Docker Desktop, then run `npm run db:start`. The first run pulls the images and applies `supabase/migrations/`, which creates the `saves` table, its RLS policies and the private `save-states` bucket.
-4. Copy the **API URL** and **anon key** from `npm run db:status` into `.env.local` as `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
-5. Run `npm run dev` and open `http://localhost:5173`. Studio is at `http://127.0.0.1:54323`.
+| GBA | Keyboard | Touch |
+| --- | --- | --- |
+| D-pad | Arrow keys | Skin D-pad |
+| A / B | X / Z | Skin buttons |
+| L / R | Q / E | Skin shoulders |
+| Start / Select | Enter / Backspace | Skin buttons |
+| Menu | — | Skin menu button (pauses the game) |
 
-`npm run db:reset` rebuilds the database from the migrations. `npm run db:stop` shuts the stack down.
+## How your data is handled
 
-### Hosted (production)
+- **ROMs never leave your device.** The game you're playing is stored only in your browser so it can resume; it's never uploaded.
+- **Cloud saves are private.** Save states are compressed and stored under your account, and row-level security ensures only you can read them.
+- **Sign-in shows Supabase's address.** Google's account picker names the auth server (`*.supabase.co`), which handles sign-in for oGBA.
 
-1. Create a Supabase project, then run `npx supabase link` and `npx supabase db push`, or paste `supabase/migrations/0001_init.sql` into the SQL editor.
-2. In **Authentication → Sign In / Providers**, enable Google. The production Google OAuth client needs the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`.
-3. In **Authentication → URL Configuration**, set the Site URL to your deployed domain and add it, plus any preview domains, to the redirect URLs.
-4. Set `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Project Settings → API) on Vercel.
+oGBA doesn't ship any games. Please only play ROMs you own.
+
+## Built with
+
+[mGBA WASM](https://github.com/thenick775/mgba/tree/feature/wasm) · React · TypeScript · Vite · Tailwind CSS · [Supabase](https://supabase.com) (Auth, Postgres, Storage) · pdf.js (for skin artwork) · Vercel
+
+Default skin: **DarkSP** (Delta skin format).
 
 ---
+
+<sub>oGBA is a fan project and is not affiliated with or endorsed by Nintendo. Game Boy Advance is a trademark of Nintendo.</sub>
