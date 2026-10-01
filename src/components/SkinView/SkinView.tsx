@@ -155,6 +155,14 @@ export function SkinView({ skin, skinError, hasRom, onMenu }: SkinViewProps) {
       sync()
     }
     const onContextMenu = (e: Event) => e.preventDefault()
+    // Holding a button is normal play (A to skip text), but browsers treat a
+    // held touch as a long-press: text selection, the iOS magnifier/callout,
+    // double-tap zoom. Cancelling the touch events stops those without
+    // affecting the pointer events above, which fire independently.
+    const onTouch = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault()
+      window.getSelection()?.removeAllRanges()
+    }
 
     el.addEventListener('pointerdown', onDown)
     el.addEventListener('pointermove', onMove)
@@ -162,6 +170,9 @@ export function SkinView({ skin, skinError, hasRom, onMenu }: SkinViewProps) {
     el.addEventListener('pointercancel', onUp)
     el.addEventListener('lostpointercapture', onUp)
     el.addEventListener('contextmenu', onContextMenu)
+    el.addEventListener('touchstart', onTouch, { passive: false })
+    el.addEventListener('touchmove', onTouch, { passive: false })
+    el.addEventListener('touchend', onTouch, { passive: false })
     return () => {
       el.removeEventListener('pointerdown', onDown)
       el.removeEventListener('pointermove', onMove)
@@ -169,6 +180,9 @@ export function SkinView({ skin, skinError, hasRom, onMenu }: SkinViewProps) {
       el.removeEventListener('pointercancel', onUp)
       el.removeEventListener('lostpointercapture', onUp)
       el.removeEventListener('contextmenu', onContextMenu)
+      el.removeEventListener('touchstart', onTouch)
+      el.removeEventListener('touchmove', onTouch)
+      el.removeEventListener('touchend', onTouch)
       // Never leave a button stuck down when the layout changes or unmounts.
       pointers.clear()
       sync()
@@ -182,7 +196,8 @@ export function SkinView({ skin, skinError, hasRom, onMenu }: SkinViewProps) {
     <div
       ref={rootRef}
       className="relative h-full w-full bg-black overflow-hidden touch-none select-none"
-      style={{ '--safe-top': 'env(safe-area-inset-top)', WebkitTouchCallout: 'none' } as CSSProperties}
+      // Tailwind's select-none is unprefixed; older iOS Safari only honours the -webkit- form.
+      style={{ '--safe-top': 'env(safe-area-inset-top)', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' } as CSSProperties}
     >
       <GameScreen
         hasRom={hasRom}

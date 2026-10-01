@@ -74,4 +74,8 @@ html, body, #root {
   color: var(--color-paper);
   font-family: 'DM Sans', system-ui, sans-serif;
   overflow: hidden;
+  /* Mobile browsers tint the pressed element for as long as it's held; on the
+     skin's full-size touch layer that washed over the whole screen whenever a
+     button (e.g. A to skip text) was held down. */
+  -webkit-tap-highlight-color: transparent;
 }
