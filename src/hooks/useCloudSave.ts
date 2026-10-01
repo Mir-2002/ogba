@@ -1,7 +1,7 @@
 import { useContext, useState, useCallback } from 'react'
 import { GbaContext } from 'react-gbajs'
-import { apiFetch } from '@/lib/api'
-import { compressToBase64, decompressFromBase64 } from '@/lib/compress'
+import { supabase } from '@/lib/supabase'
+import { gzipBytes, gunzipBytes } from '@/lib/compress'
 import type { AppUser } from '@/hooks/useAuth'
 
 export type SlotNumber = 1 | 2 | 3
@@ -11,6 +11,14 @@ export interface SlotMeta {
   romTitle: string
   savedAt: Date
   rawSizeBytes: number
+}
+
+const BUCKET = 'save-states'
+
+// Storage keys reject `%` and most punctuation, so encodeURIComponent won't do —
+// collapse anything outside the safe set to `_` instead.
+function storagePath(userId: string, romId: string, slot: SlotNumber) {
+  return `${userId}/${romId.replace(/[^A-Za-z0-9._-]/g, '_')}/${slot}.state.gz`
 }
 
 export function useCloudSave(user: AppUser | null, romId: string | null, romTitle: string | null) {
@@ -24,13 +32,32 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     if (!user || !romId || !romTitle) return
     setBusy(true); setError(null)
     try {
-      const state     = saveState()
-      const json      = JSON.stringify(state)
-      const stateData = await compressToBase64(state)
-      await apiFetch(`/api/saves/${encodeURIComponent(romId)}/${slot}`, {
-        method: 'PUT',
-        body: JSON.stringify({ stateData, romTitle, rawSizeBytes: new Blob([json]).size }),
-      })
+      const state      = saveState()
+      const json        = JSON.stringify(state)
+      const rawBytes    = new TextEncoder().encode(json)
+      const compressed  = await gzipBytes(rawBytes)
+      const path        = storagePath(user.id, romId, slot)
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, new Blob([compressed], { type: 'application/gzip' }), {
+          upsert: true,
+          contentType: 'application/gzip',
+        })
+      if (uploadError) throw uploadError
+
+      const { error: upsertError } = await supabase
+        .from('saves')
+        .upsert({
+          user_id:      user.id,
+          rom_id:       romId,
+          slot_number:  slot,
+          rom_title:    romTitle,
+          size_bytes:   rawBytes.byteLength,
+          storage_path: path,
+          saved_at:     new Date().toISOString(),
+        }, { onConflict: 'user_id,rom_id,slot_number' })
+      if (upsertError) throw upsertError
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed')
     } finally {
@@ -42,14 +69,26 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     if (!user || !romId) return
     setBusy(true); setError(null)
     try {
-      const data = await apiFetch(`/api/saves/${encodeURIComponent(romId)}/${slot}`) as { stateData: string; romId: string } | null
-      if (!data) { setError('No save in this slot'); return }
-      if (data.romId !== romId) {
-        setError('Save is for a different game. Load the matching ROM first.')
-        return
-      }
+      const { data: row, error: selectError } = await supabase
+        .from('saves')
+        .select('storage_path')
+        .eq('user_id', user.id)
+        .eq('rom_id', romId)
+        .eq('slot_number', slot)
+        .maybeSingle()
+      if (selectError) throw selectError
+      if (!row) { setError('No save in this slot'); return }
+
+      const { data: blob, error: downloadError } = await supabase.storage
+        .from(BUCKET)
+        .download(row.storage_path)
+      if (downloadError) throw downloadError
+
+      const compressed = new Uint8Array(await blob.arrayBuffer())
+      const rawBytes    = await gunzipBytes(compressed)
+      const json        = new TextDecoder().decode(rawBytes)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = await decompressFromBase64(data.stateData) as any
+      const state = JSON.parse(json) as any
       play({ newRomBuffer: undefined, restoreState: state })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Load failed')
@@ -62,8 +101,24 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     if (!user || !romId) return [null, null, null]
     setListError(null)
     try {
-      const data = await apiFetch(`/api/saves/${encodeURIComponent(romId)}`) as Array<{ slotNumber: SlotNumber; romTitle: string; savedAt: string; rawSizeBytes: number } | null>
-      return data.map(s => s ? { ...s, savedAt: new Date(s.savedAt) } : null)
+      const { data, error: selectError } = await supabase
+        .from('saves')
+        .select('slot_number, rom_title, saved_at, size_bytes')
+        .eq('user_id', user.id)
+        .eq('rom_id', romId)
+      if (selectError) throw selectError
+
+      const rows = data ?? []
+      return ([1, 2, 3] as SlotNumber[]).map(n => {
+        const row = rows.find(r => r.slot_number === n)
+        if (!row) return null
+        return {
+          slotNumber:   n,
+          romTitle:     row.rom_title as string,
+          savedAt:      new Date(row.saved_at as string),
+          rawSizeBytes: row.size_bytes as number,
+        }
+      })
     } catch (e) {
       setListError(e instanceof Error ? e.message : 'Failed to load save slots')
       return [null, null, null]

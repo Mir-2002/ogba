@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { GbaProvider } from 'react-gbajs'
-import { GoogleLogin } from '@react-oauth/google'
 import oGBALogo from '@/assets/oGBAlogo.png'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { RomLoader } from '@/components/RomLoader/RomLoader'
@@ -15,7 +14,7 @@ import { useVolume } from '@/hooks/useVolume'
 
 function AppContent() {
   const { state, loadFile, ejectRom, romId, romTitle } = useRomLoader()
-  const { user, loading: authLoading, authError, handleGoogleCredential, signOut } = useAuth()
+  const { user, loading: authLoading, authError, signIn, signOut } = useAuth()
   const { save, load, listSlots, busy, error, listError } = useCloudSave(user, romId, romTitle)
   const { volume, setVolume, isMuted, toggleMute } = useVolume()
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
@@ -55,13 +54,12 @@ function AppContent() {
                 </button>
               </div>
             ) : (
-              <GoogleLogin
-                onSuccess={cred => handleGoogleCredential(cred.credential!)}
-                onError={() => {}}
-                theme="filled_black"
-                shape="pill"
-                size="small"
-              />
+              <button
+                onClick={() => signIn()}
+                className="text-xs text-dim hover:text-muted transition-colors cursor-pointer bg-transparent border border-white/10 rounded-full px-3 py-1 neu-button hover:bg-surface2"
+              >
+                Sign in with Google
+              </button>
             )
           )}
         </div>

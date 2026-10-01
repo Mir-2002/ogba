@@ -9,12 +9,24 @@ A full-stack, browser-based **Game Boy Advance emulator** with cloud save states
 ## Features
 
 - **Drag-and-drop ROM loading** — drop any `.gba` file onto the loader; the ROM title and game code are parsed directly from the binary header (offsets `0xA0`–`0xB0`)
-- **Cloud save states** — 3 save slots per game, persisted to PostgreSQL and synced across devices
-- **Google sign-in** — OAuth2 authentication via a custom serverless JWT flow; no third-party session management
+- **Cloud save states** — 3 save slots per game, persisted to Supabase Postgres (metadata) + Supabase Storage (compressed state blobs), synced across devices
+- **Google sign-in** — OAuth via Supabase Auth's redirect flow; row-level security scopes every save to its owner
 - **Full keyboard controls** — arrows, Z/X (B/A), Enter (Start), Backspace (Select), Q/E (L/R)
 - **Mobile touch controls** — D-pad, A/B, Select/Start, and L/R shoulder buttons built with the Pointer Events API (`setPointerCapture` for reliable input even when fingers drift)
 - **Pause / resume** — pause overlay directly on the game canvas
 - **Volume control** — mute toggle and slider, persisted across sessions
 - **Responsive layout** — sidebar on desktop; slide-up save drawer + FAB on mobile
+
+---
+
+## Setup
+
+Backend is [Supabase](https://supabase.com): Postgres (with row-level security) for save metadata, Storage for the compressed save-state blobs, and Auth (Google OAuth, redirect flow) for sign-in. There is no server code — the browser talks to Supabase directly via `@supabase/supabase-js`.
+
+1. Create a Supabase project.
+2. Run `supabase/migrations/0001_init.sql` in the SQL editor — creates the `saves` table + RLS policies and the private `save-states` storage bucket + its policies.
+3. In **Authentication → Sign In / Providers**, enable Google and set up a Google OAuth client whose authorized redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
+4. In **Authentication → URL Configuration**, set the Site URL and add redirect URLs for `http://localhost:5173` and your deployed domain(s).
+5. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Project Settings → API). Set the same two variables on Vercel for deployment.
 
 ---

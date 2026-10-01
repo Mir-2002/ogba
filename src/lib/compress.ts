@@ -1,25 +1,21 @@
-export async function compressToBase64(obj: unknown): Promise<string> {
-  const json    = JSON.stringify(obj)
-  const encoded = new TextEncoder().encode(json)
-  const stream  = new CompressionStream('gzip')
-  const writer  = stream.writable.getWriter()
-  writer.write(encoded)
+// Raw byte gzip/gunzip. Kept separate from any serialization format so the
+// upcoming mGBA WASM swap (which produces raw Uint8Array save states, no
+// JSON step) can reuse these directly.
+
+export async function gzipBytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
+  const stream = new CompressionStream('gzip')
+  const writer = stream.writable.getWriter()
+  writer.write(data)
   writer.close()
-  const buf  = await new Response(stream.readable).arrayBuffer()
-  const arr  = new Uint8Array(buf)
-  let binary = ''
-  arr.forEach(b => (binary += String.fromCharCode(b)))
-  return btoa(binary)
+  const buf = await new Response(stream.readable).arrayBuffer()
+  return new Uint8Array(buf)
 }
 
-export async function decompressFromBase64(b64: string): Promise<unknown> {
-  const binary = atob(b64)
-  const arr    = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
+export async function gunzipBytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   const stream = new DecompressionStream('gzip')
   const writer = stream.writable.getWriter()
-  writer.write(arr)
+  writer.write(data)
   writer.close()
-  const json = await new Response(stream.readable).text()
-  return JSON.parse(json)
+  const buf = await new Response(stream.readable).arrayBuffer()
+  return new Uint8Array(buf)
 }
