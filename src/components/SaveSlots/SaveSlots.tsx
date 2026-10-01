@@ -52,6 +52,11 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
         <p className="text-danger text-xs mb-2 m-0 font-body">{listError}</p>
       )}
 
+      {/* Slots belong to a game, so without one there is nothing to look up —
+          say so rather than showing three "Empty" slots that read as lost saves. */}
+      {!hasRom ? (
+        <p className="text-sm text-muted m-0 font-body">Load a ROM to see its save states.</p>
+      ) : (
       <div className="flex flex-col gap-1.5">
         {slotsLoading
           ? SLOTS.map((n) => (
@@ -120,6 +125,7 @@ export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listErro
               )
             })}
       </div>
+      )}
       {error && <p className="mt-2 text-[10px] text-danger m-0 font-body">{error}</p>}
     </div>
   )

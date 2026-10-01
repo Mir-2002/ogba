@@ -13,7 +13,9 @@ export interface EmulatorApi extends EmulatorState {
   // canvas; the canvas is moved into it. Init happens the first time this fires.
   screenHostRef: (node: HTMLElement | null) => void
   loadRom:      (bytes: Uint8Array, fileName: string) => Promise<boolean>
+  getStoredRom: () => { bytes: Uint8Array<ArrayBuffer>; fileName: string } | null
   ejectRom:     () => void
+  flush:        () => Promise<void>
   press:        (button: GbaButton) => void
   release:      (button: GbaButton) => void
   pause:        () => void

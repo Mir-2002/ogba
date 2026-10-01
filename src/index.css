@@ -25,7 +25,8 @@
   --color-paper: #f4f1fa;
   --color-muted: #a79fc9;
 
-  /* Error red */
+  /* Success green (save confirmations) + error red */
+  --color-led:    #3ddc84;
   --color-danger: #f2555b;
 }
 

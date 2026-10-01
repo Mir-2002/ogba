@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEmulator } from '@/emulator/useEmulator'
 import { getRomMeta } from '@/lib/romId'
 
@@ -13,7 +13,7 @@ interface RomLoaderState {
 const MAX_ROM_SIZE = 32 * 1024 * 1024
 
 export function useRomLoader() {
-  const { loadRom, ejectRom: quitGame } = useEmulator()
+  const { ready, loadRom, getStoredRom, ejectRom: quitGame } = useEmulator()
   const [state, setState] = useState<RomLoaderState>({
     isLoading: false,
     error: null,
@@ -21,6 +21,35 @@ export function useRomLoader() {
     romId: null,
     romTitle: null,
   })
+
+  const start = useCallback(async (romBuffer: Uint8Array, fileName: string) => {
+    setState({ isLoading: true, error: null, hasRom: false, romId: null, romTitle: null })
+    const { romId, romTitle } = getRomMeta(romBuffer)
+    const success = await loadRom(romBuffer, fileName)
+    if (!success) {
+      setState({
+        isLoading: false,
+        error: 'Failed to start emulator. The ROM may be invalid or corrupt.',
+        hasRom: false,
+        romId: null,
+        romTitle: null,
+      })
+    } else {
+      setState({ isLoading: false, error: null, hasRom: true, romId, romTitle })
+    }
+  }, [loadRom])
+
+  // Put the player back into their last game after any reload, including the
+  // sign-in redirect. mGBA then restores its auto-save state on top.
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (!ready || restoredRef.current) return
+    restoredRef.current = true
+    const stored = getStoredRom()
+    if (stored) start(stored.bytes, stored.fileName).catch(() => {
+      setState({ isLoading: false, error: null, hasRom: false, romId: null, romTitle: null })
+    })
+  }, [ready, getStoredRom, start])
 
   const loadFile = useCallback(
     async (file: File) => {
@@ -36,29 +65,13 @@ export function useRomLoader() {
         return
       }
 
-      setState({ isLoading: true, error: null, hasRom: false, romId: null, romTitle: null })
-
       try {
-        const buffer = await file.arrayBuffer()
-        const romBuffer = new Uint8Array(buffer)
-        const { romId, romTitle } = getRomMeta(romBuffer)
-        const success = await loadRom(romBuffer, file.name)
-        if (!success) {
-          setState({
-            isLoading: false,
-            error: 'Failed to start emulator. The ROM may be invalid or corrupt.',
-            hasRom: false,
-            romId: null,
-            romTitle: null,
-          })
-        } else {
-          setState({ isLoading: false, error: null, hasRom: true, romId, romTitle })
-        }
+        await start(new Uint8Array(await file.arrayBuffer()), file.name)
       } catch {
         setState({ isLoading: false, error: 'Failed to read file.', hasRom: false, romId: null, romTitle: null })
       }
     },
-    [loadRom],
+    [start],
   )
 
   const ejectRom = useCallback(() => {

@@ -219,13 +219,41 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
     if (success) {
       mod.setVolume(volumeRef.current)
       setState((s) => ({ ...s, isRunning: true, isPaused: false }))
+      // Persist the ROM now rather than on the next autosave tick: signing in
+      // is a full-page redirect, and a reload must find it to resume.
+      mod.FSSync().catch(() => {})
     }
     return success
   }, [])
 
+  // The last-played ROM, as kept in IDBFS by loadRom, so a reload (e.g. the
+  // OAuth redirect) can put the player straight back into their game.
+  const getStoredRom = useCallback((): { bytes: Uint8Array<ArrayBuffer>; fileName: string } | null => {
+    const mod = moduleRef.current
+    if (!mod) return null
+    const { gamePath } = mod.filePaths()
+    const fileName = mod.FS.readdir(gamePath).find((f) => f !== '.' && f !== '..')
+    if (!fileName) return null
+    return { bytes: new Uint8Array(mod.FS.readFile(`${gamePath}/${fileName}`)), fileName }
+  }, [])
+
   const ejectRom = useCallback(() => {
-    moduleRef.current?.quitGame()
+    const mod = moduleRef.current
+    if (mod) {
+      mod.quitGame()
+      // An ejected cartridge shouldn't reappear on the next visit.
+      const { gamePath } = mod.filePaths()
+      for (const f of mod.FS.readdir(gamePath)) {
+        if (f !== '.' && f !== '..') mod.FS.unlink(`${gamePath}/${f}`)
+      }
+      mod.FSSync().catch(() => {})
+    }
     setState((s) => ({ ...s, isRunning: false, isPaused: false }))
+  }, [])
+
+  // Writes pending save data to IndexedDB; await before navigating away.
+  const flush = useCallback(async () => {
+    await moduleRef.current?.FSSync().catch(() => {})
   }, [])
 
   const press = useCallback((button: GbaButton) => {
@@ -275,7 +303,9 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
     ...state,
     screenHostRef,
     loadRom,
+    getStoredRom,
     ejectRom,
+    flush,
     press,
     release,
     pause,
@@ -283,7 +313,7 @@ export function EmulatorProvider({ children }: EmulatorProviderProps) {
     setVolume,
     exportState,
     importState,
-  }), [state, screenHostRef, loadRom, ejectRom, press, release, pause, resume, setVolume, exportState, importState])
+  }), [state, screenHostRef, loadRom, getStoredRom, ejectRom, flush, press, release, pause, resume, setVolume, exportState, importState])
 
   return (
     <EmulatorContext.Provider value={api}>

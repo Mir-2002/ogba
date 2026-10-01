@@ -57,7 +57,9 @@ function AppContent() {
     user,
     authLoading,
     authError,
-    signIn,
+    // Sign-in leaves the page (OAuth redirect), so get the ROM and latest
+    // save data into IndexedDB first; the reload then resumes from it.
+    signIn: async () => { await emulator.flush(); await signIn() },
     signOut,
     volume,
     setVolume,
