@@ -31,19 +31,16 @@ oGBA is a GBA emulator that runs entirely in the browser. Open the page, load a 
 | Start / Select | Enter / Backspace | Skin buttons |
 | Menu | — | Skin menu button (pauses the game) |
 
-## How your data is handled
+## Your games and saves
 
-- **ROMs never leave your device.** The game you're playing is stored only in your browser so it can resume; it's never uploaded.
-- **Cloud saves are private.** Save states are compressed and stored under your account, and row-level security ensures only you can read them.
-- **Sign-in shows Supabase's address.** Google's account picker names the auth server (`*.supabase.co`), which handles sign-in for oGBA.
+- **Your ROMs stay on your device.** The game you're playing is kept only in your browser so it can resume where you left off. It's never uploaded.
+- **Cloud saves are yours alone.** Save states are stored privately under your account, and nobody else can see them.
 
-oGBA doesn't ship any games. Please only play ROMs you own.
+oGBA doesn't come with any games. Please only play ROMs you own.
 
-## Built with
+## Credits
 
-[mGBA WASM](https://github.com/thenick775/mgba/tree/feature/wasm) · React · TypeScript · Vite · Tailwind CSS · [Supabase](https://supabase.com) (Auth, Postgres, Storage) · pdf.js (for skin artwork) · Vercel
-
-Default skin: **DarkSP** (Delta skin format).
+Emulation by [mGBA](https://mgba.io). The touch controls use the [Delta](https://github.com/rileytestut/Delta) skin format, and the default skin is **DarkSP**.
 
 ---
 
