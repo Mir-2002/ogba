@@ -1,9 +1,8 @@
-import { GBA_KEYS } from '@/types/gba'
 import { useTouchButton } from '@/hooks/useTouchButton'
 
 export function ShoulderButtons() {
-  const lRef = useTouchButton(GBA_KEYS.L)
-  const rRef = useTouchButton(GBA_KEYS.R)
+  const lRef = useTouchButton('L')
+  const rRef = useTouchButton('R')
 
   const pillClass = 'px-5 py-1.5 rounded-full bg-surface border border-white/10 text-dim text-[0.65rem] font-mono tracking-wide touch-none appearance-none cursor-pointer active:bg-surface2 transition-colors duration-75 neu-button active:neu-button-pressed'
 

@@ -8,6 +8,7 @@ A full-stack, browser-based **Game Boy Advance emulator** with cloud save states
 
 ## Features
 
+- **mGBA compiled to WebAssembly** — a real, cycle-accurate core (not a JS interpreter) running in a cross-origin-isolated worker, with local battery saves and auto-resume persisted to IndexedDB even before you sign in
 - **Drag-and-drop ROM loading** — drop any `.gba` file onto the loader; the ROM title and game code are parsed directly from the binary header (offsets `0xA0`–`0xB0`)
 - **Cloud save states** — 3 save slots per game, persisted to Supabase Postgres (metadata) + Supabase Storage (compressed state blobs), synced across devices
 - **Google sign-in** — OAuth via Supabase Auth's redirect flow; row-level security scopes every save to its owner

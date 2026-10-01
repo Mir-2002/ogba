@@ -1,42 +1,53 @@
-import { useContext, useEffect, useLayoutEffect, useRef } from 'react'
-import { GbaContext } from 'react-gbajs'
-import type { GbaKeyIndex } from '@/types/gba'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEmulator } from '@/emulator/useEmulator'
+import type { GbaButton } from '@/types/gba'
 
-export function useTouchButton(keyIndex: GbaKeyIndex) {
-  const { gba } = useContext(GbaContext)
+export function useTouchButton(button: GbaButton) {
+  const { press, release } = useEmulator()
   const ref = useRef<HTMLButtonElement>(null)
-  const gbaRef = useRef(gba)
+  const apiRef = useRef({ press, release })
+  const pressedRef = useRef(false)
 
-  // Keep gbaRef current without triggering the layout effect
-  useEffect(() => { gbaRef.current = gba }, [gba])
+  // Keep apiRef current without re-binding listeners on every render
+  useEffect(() => { apiRef.current = { press, release } }, [press, release])
 
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
 
-    const onPress = (e: PointerEvent) => {
+    const doPress = () => {
+      if (pressedRef.current) return
+      pressedRef.current = true
+      apiRef.current.press(button)
+    }
+    const doRelease = () => {
+      if (!pressedRef.current) return
+      pressedRef.current = false
+      apiRef.current.release(button)
+    }
+
+    const onPointerDown = (e: PointerEvent) => {
       e.preventDefault()
       el.setPointerCapture(e.pointerId)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(gbaRef.current as any)?.keypad?.keyDown(keyIndex)
+      doPress()
     }
-    const onRelease = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(gbaRef.current as any)?.keypad?.keyUp(keyIndex)
-    }
+    const onContextMenu = (e: Event) => e.preventDefault()
 
-    el.addEventListener('pointerdown', onPress)
-    el.addEventListener('pointerup', onRelease)
-    el.addEventListener('pointercancel', onRelease)
-    el.addEventListener('pointerleave', onRelease)
+    el.addEventListener('pointerdown', onPointerDown)
+    el.addEventListener('pointerup', doRelease)
+    el.addEventListener('pointercancel', doRelease)
+    el.addEventListener('lostpointercapture', doRelease)
+    el.addEventListener('contextmenu', onContextMenu)
 
     return () => {
-      el.removeEventListener('pointerdown', onPress)
-      el.removeEventListener('pointerup', onRelease)
-      el.removeEventListener('pointercancel', onRelease)
-      el.removeEventListener('pointerleave', onRelease)
+      el.removeEventListener('pointerdown', onPointerDown)
+      el.removeEventListener('pointerup', doRelease)
+      el.removeEventListener('pointercancel', doRelease)
+      el.removeEventListener('lostpointercapture', doRelease)
+      el.removeEventListener('contextmenu', onContextMenu)
+      doRelease() // don't leave the button stuck pressed if we unmount mid-press
     }
-  }, [keyIndex]) // gba intentionally removed — use gbaRef instead
+  }, [button]) // press/release intentionally excluded — use apiRef instead
 
   return ref
 }

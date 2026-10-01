@@ -1,6 +1,6 @@
-import { useContext, useState, useCallback } from 'react'
-import { GbaContext } from 'react-gbajs'
-import { supabase } from '@/lib/supabase'
+import { useState, useCallback } from 'react'
+import { useEmulator } from '@/emulator/useEmulator'
+import { requireSupabase } from '@/lib/supabase'
 import { gzipBytes, gunzipBytes } from '@/lib/compress'
 import type { AppUser } from '@/hooks/useAuth'
 
@@ -22,8 +22,7 @@ function storagePath(userId: string, romId: string, slot: SlotNumber) {
 }
 
 export function useCloudSave(user: AppUser | null, romId: string | null, romTitle: string | null) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { play, saveState } = useContext(GbaContext) as any
+  const { exportState, importState } = useEmulator()
   const [busy,      setBusy]      = useState(false)
   const [error,     setError]     = useState<string | null>(null)
   const [listError, setListError] = useState<string | null>(null)
@@ -32,13 +31,11 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     if (!user || !romId || !romTitle) return
     setBusy(true); setError(null)
     try {
-      const state      = saveState()
-      const json        = JSON.stringify(state)
-      const rawBytes    = new TextEncoder().encode(json)
+      const rawBytes   = await exportState()
       const compressed  = await gzipBytes(rawBytes)
       const path        = storagePath(user.id, romId, slot)
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await requireSupabase().storage
         .from(BUCKET)
         .upload(path, new Blob([compressed], { type: 'application/gzip' }), {
           upsert: true,
@@ -46,7 +43,7 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
         })
       if (uploadError) throw uploadError
 
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await requireSupabase()
         .from('saves')
         .upsert({
           user_id:      user.id,
@@ -63,13 +60,13 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     } finally {
       setBusy(false)
     }
-  }, [user, romId, romTitle, saveState])
+  }, [user, romId, romTitle, exportState])
 
   const load = useCallback(async (slot: SlotNumber) => {
     if (!user || !romId) return
     setBusy(true); setError(null)
     try {
-      const { data: row, error: selectError } = await supabase
+      const { data: row, error: selectError } = await requireSupabase()
         .from('saves')
         .select('storage_path')
         .eq('user_id', user.id)
@@ -79,29 +76,27 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
       if (selectError) throw selectError
       if (!row) { setError('No save in this slot'); return }
 
-      const { data: blob, error: downloadError } = await supabase.storage
+      const { data: blob, error: downloadError } = await requireSupabase().storage
         .from(BUCKET)
         .download(row.storage_path)
       if (downloadError) throw downloadError
 
       const compressed = new Uint8Array(await blob.arrayBuffer())
       const rawBytes    = await gunzipBytes(compressed)
-      const json        = new TextDecoder().decode(rawBytes)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = JSON.parse(json) as any
-      play({ newRomBuffer: undefined, restoreState: state })
+      const ok          = await importState(rawBytes)
+      if (!ok) setError('Failed to load save state')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Load failed')
     } finally {
       setBusy(false)
     }
-  }, [user, romId, play])
+  }, [user, romId, importState])
 
   const listSlots = useCallback(async (): Promise<(SlotMeta | null)[]> => {
     if (!user || !romId) return [null, null, null]
     setListError(null)
     try {
-      const { data, error: selectError } = await supabase
+      const { data, error: selectError } = await requireSupabase()
         .from('saves')
         .select('slot_number, rom_title, saved_at, size_bytes')
         .eq('user_id', user.id)

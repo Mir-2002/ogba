@@ -1,9 +1,8 @@
-import { GBA_KEYS } from '@/types/gba'
 import { useTouchButton } from '@/hooks/useTouchButton'
 
 export function ActionButtons() {
-  const aRef = useTouchButton(GBA_KEYS.A)
-  const bRef = useTouchButton(GBA_KEYS.B)
+  const aRef = useTouchButton('A')
+  const bRef = useTouchButton('B')
 
   return (
     <div className="grid [grid-template-columns:48px_48px] [grid-template-rows:48px_48px] gap-1 touch-none select-none">

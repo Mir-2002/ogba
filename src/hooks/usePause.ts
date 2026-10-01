@@ -1,23 +1,15 @@
-import { useContext, useState, useCallback } from 'react'
-import { GbaContext } from 'react-gbajs'
+import { useCallback } from 'react'
+import { useEmulator } from '@/emulator/useEmulator'
 
 export function usePause() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctx = useContext(GbaContext) as any
-  const [isPaused, setIsPaused] = useState(false)
+  const { ready, isRunning, isPaused, pause, resume } = useEmulator()
 
   const togglePause = useCallback(() => {
-    if (!ctx?.pause || !ctx?.resume) return
-    if (isPaused) {
-      ctx.resume()
-      setIsPaused(false)
-    } else {
-      ctx.pause()
-      setIsPaused(true)
-    }
-  }, [ctx, isPaused])
+    if (isPaused) resume()
+    else pause()
+  }, [isPaused, pause, resume])
 
-  const hasPauseSupport = !!(ctx?.pause && ctx?.resume)
+  const hasPauseSupport = ready && isRunning
 
   return { isPaused, togglePause, hasPauseSupport }
 }

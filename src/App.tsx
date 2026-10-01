@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GbaProvider } from 'react-gbajs'
+import { EmulatorProvider } from '@/emulator/EmulatorProvider'
 import oGBALogo from '@/assets/oGBAlogo.png'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { RomLoader } from '@/components/RomLoader/RomLoader'
@@ -199,9 +199,9 @@ function AppContent() {
 export function App() {
   return (
     <ErrorBoundary>
-      <GbaProvider>
+      <EmulatorProvider>
         <AppContent />
-      </GbaProvider>
+      </EmulatorProvider>
     </ErrorBoundary>
   )
 }

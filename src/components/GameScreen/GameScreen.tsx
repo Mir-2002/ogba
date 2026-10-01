@@ -1,6 +1,6 @@
-import ReactGbaJs from 'react-gbajs'
+import { useEffect } from 'react'
 import { useGbaScale } from '@/hooks/useGbaScale'
-import { useKeyboardControls } from '@/hooks/useKeyboardControls'
+import { useEmulator } from '@/emulator/useEmulator'
 import { PauseButton } from './PauseButton'
 
 interface GameScreenProps {
@@ -10,7 +10,11 @@ interface GameScreenProps {
 
 export function GameScreen({ hasRom, volume }: GameScreenProps) {
   const scale = useGbaScale(hasRom)
-  useKeyboardControls(hasRom)
+  const { canvasRef, ready, initError, setVolume } = useEmulator()
+
+  useEffect(() => {
+    if (ready) setVolume(volume)
+  }, [ready, volume, setVolume])
 
   return (
     <div className="rounded-2xl bg-surface gba-card p-4 lg:p-5 shrink-0 relative">
@@ -30,12 +34,22 @@ export function GameScreen({ hasRom, volume }: GameScreenProps) {
       </div>
 
       <div className="rounded-lg bg-[#050508] screen-bezel relative overflow-hidden leading-[0]">
-        {!hasRom && (
+        {!hasRom && !initError && (
           <div className="absolute inset-0 z-10 flex items-center justify-center text-dim text-xs font-mono pointer-events-none select-none">
             Load a ROM to begin
           </div>
         )}
-        <ReactGbaJs scale={scale} volume={volume} />
+        {initError && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center text-center text-red text-xs font-mono p-4 pointer-events-none select-none">
+            {initError}
+          </div>
+        )}
+        <canvas
+          ref={canvasRef}
+          width={240}
+          height={160}
+          style={{ width: 240 * scale, height: 160 * scale, imageRendering: 'pixelated' }}
+        />
         <PauseButton />
       </div>
     </div>

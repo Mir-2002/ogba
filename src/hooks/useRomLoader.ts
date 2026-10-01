@@ -1,5 +1,5 @@
-import { useContext, useState, useCallback } from 'react'
-import { GbaContext } from 'react-gbajs'
+import { useState, useCallback } from 'react'
+import { useEmulator } from '@/emulator/useEmulator'
 import { getRomMeta } from '@/lib/romId'
 
 interface RomLoaderState {
@@ -12,17 +12,8 @@ interface RomLoaderState {
 
 const MAX_ROM_SIZE = 32 * 1024 * 1024
 
-function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as ArrayBuffer)
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsArrayBuffer(file)
-  })
-}
-
 export function useRomLoader() {
-  const { play } = useContext(GbaContext)
+  const { loadRom, ejectRom: quitGame } = useEmulator()
   const [state, setState] = useState<RomLoaderState>({
     isLoading: false,
     error: null,
@@ -48,10 +39,10 @@ export function useRomLoader() {
       setState({ isLoading: true, error: null, hasRom: false, romId: null, romTitle: null })
 
       try {
-        const buffer = await readFileAsArrayBuffer(file)
-        const newRomBuffer = new Uint8Array(buffer)
-        const { romId, romTitle } = getRomMeta(newRomBuffer)
-        const success = play({ newRomBuffer, restoreState: undefined })
+        const buffer = await file.arrayBuffer()
+        const romBuffer = new Uint8Array(buffer)
+        const { romId, romTitle } = getRomMeta(romBuffer)
+        const success = await loadRom(romBuffer, file.name)
         if (!success) {
           setState({
             isLoading: false,
@@ -67,12 +58,13 @@ export function useRomLoader() {
         setState({ isLoading: false, error: 'Failed to read file.', hasRom: false, romId: null, romTitle: null })
       }
     },
-    [play],
+    [loadRom],
   )
 
   const ejectRom = useCallback(() => {
+    quitGame()
     setState({ isLoading: false, error: null, hasRom: false, romId: null, romTitle: null })
-  }, [])
+  }, [quitGame])
 
   const { romId, romTitle } = state
   return { state, loadFile, ejectRom, romId, romTitle }
