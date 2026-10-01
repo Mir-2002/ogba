@@ -18,10 +18,11 @@ function toAppUser(user: User): AppUser {
 
 export function useAuth() {
   const [user, setUser]           = useState<AppUser | null>(null)
-  const [loading, setLoading]     = useState(true)
+  const [loading, setLoading]     = useState(supabase !== null)
   const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!supabase) return
     supabase.auth.getSession()
       .then(({ data, error }) => {
         if (error) setAuthError(error.message)
@@ -38,6 +39,7 @@ export function useAuth() {
 
   async function signIn() {
     setAuthError(null)
+    if (!supabase) { setAuthError('Sign-in is not configured'); return }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
@@ -46,8 +48,10 @@ export function useAuth() {
   }
 
   async function signOut() {
-    const { error } = await supabase.auth.signOut()
-    if (error) setAuthError(error.message)
+    if (supabase) {
+      const { error } = await supabase.auth.signOut()
+      if (error) setAuthError(error.message)
+    }
     setUser(null)
   }
 
