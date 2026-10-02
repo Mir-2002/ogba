@@ -53,6 +53,13 @@ export function useRomLoader() {
 
   const loadFile = useCallback(
     async (file: File) => {
+      // mGBA takes a few seconds to boot after any page load (including the
+      // sign-in redirect); the loader is disabled until then, but a drop can
+      // still land here.
+      if (!ready) {
+        setState((s) => ({ ...s, error: 'The emulator is still starting. Try again in a moment.' }))
+        return
+      }
       if (!file.name.toLowerCase().endsWith('.gba')) {
         setState((s) => ({ ...s, error: 'Please select a valid .gba ROM file.' }))
         return
@@ -65,13 +72,26 @@ export function useRomLoader() {
         return
       }
 
+      let bytes: Uint8Array
       try {
-        await start(new Uint8Array(await file.arrayBuffer()), file.name)
+        bytes = new Uint8Array(await file.arrayBuffer())
       } catch {
-        setState({ isLoading: false, error: 'Failed to read file.', hasRom: false, romId: null, romTitle: null })
+        setState((s) => ({ ...s, error: 'Failed to read file.' }))
+        return
+      }
+      try {
+        await start(bytes, file.name)
+      } catch (e) {
+        setState({
+          isLoading: false,
+          error: e instanceof Error ? e.message : 'Failed to start the ROM.',
+          hasRom: false,
+          romId: null,
+          romTitle: null,
+        })
       }
     },
-    [start],
+    [ready, start],
   )
 
   const ejectRom = useCallback(() => {
@@ -80,5 +100,5 @@ export function useRomLoader() {
   }, [quitGame])
 
   const { romId, romTitle } = state
-  return { state, loadFile, ejectRom, romId, romTitle }
+  return { state: { ...state, isStarting: !ready }, loadFile, ejectRom, romId, romTitle }
 }

@@ -7,6 +7,7 @@ import type { SlotNumber, SlotMeta } from '@/hooks/useCloudSave'
 interface RomState {
   hasRom: boolean
   isLoading: boolean
+  isStarting: boolean
   error: string | null
   romTitle: string | null
 }
@@ -99,7 +100,7 @@ export function PanelContent({
         <SectionHeading>Cartridge</SectionHeading>
         {!state.hasRom ? (
           <ErrorBoundary>
-            <RomLoader onFile={loadFile} isLoading={state.isLoading} error={state.error} />
+            <RomLoader onFile={loadFile} isLoading={state.isLoading} isStarting={state.isStarting} error={state.error} />
           </ErrorBoundary>
         ) : (
           <div className="flex flex-col gap-1">

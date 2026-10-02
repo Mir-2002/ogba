@@ -3,10 +3,13 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 interface RomLoaderProps {
   onFile: (file: File) => void
   isLoading: boolean
+  // mGBA hasn't finished booting, so there is nothing to load the ROM into yet.
+  isStarting: boolean
   error: string | null
 }
 
-export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
+export function RomLoader({ onFile, isLoading, isStarting, error }: RomLoaderProps) {
+  const disabled = isLoading || isStarting
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -39,13 +42,13 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
     e.stopPropagation()
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
-    if (file) onFile(file)
+    if (file && !disabled) onFile(file)
   }
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <label
-        aria-disabled={isLoading ? 'true' : undefined}
+        aria-disabled={disabled ? 'true' : undefined}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -63,7 +66,7 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
           accept=".gba"
           className="absolute w-px h-px opacity-0 pointer-events-none"
           onChange={handleChange}
-          disabled={isLoading}
+          disabled={disabled}
         />
         <svg
           className={['mx-auto mb-3 opacity-70 transition-colors duration-200', isDragging ? 'text-shell-light' : 'text-muted'].join(' ')}
@@ -74,7 +77,9 @@ export function RomLoader({ onFile, isLoading, error }: RomLoaderProps) {
           <rect x="3" y="3" width="18" height="14" rx="2"/>
           <path d="M7 17v2M17 17v2M3 10h18"/>
         </svg>
-        {isLoading ? (
+        {isStarting ? (
+          <span className="text-muted text-sm font-body">Starting emulator…</span>
+        ) : isLoading ? (
           <span className="text-muted text-sm font-body">Loading ROM…</span>
         ) : isDragging ? (
           <span className="block font-body font-semibold text-shell-light text-sm">Release to load</span>
