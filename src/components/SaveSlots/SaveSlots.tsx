@@ -6,7 +6,7 @@ interface Props {
   // refetched each time it becomes true.
   active?: boolean
   hasRom: boolean
-  save: (slot: SlotNumber) => Promise<void>
+  save: (slot: SlotNumber) => Promise<boolean>
   load: (slot: SlotNumber) => Promise<void>
   listSlots: () => Promise<(SlotMeta | null)[]>
   busy: boolean
@@ -51,8 +51,9 @@ export function SaveSlots({ active = true, hasRom, save, load, listSlots, busy, 
   }, [active, refresh])
 
   async function handleSave(slot: SlotNumber) {
-    await save(slot)
+    const ok = await save(slot)
     await refresh()
+    if (!ok) return
     setLastSaved(slot)
     setTimeout(() => setLastSaved(null), 2000)
   }

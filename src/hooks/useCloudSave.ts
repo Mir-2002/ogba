@@ -27,8 +27,10 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
   const [error,     setError]     = useState<string | null>(null)
   const [listError, setListError] = useState<string | null>(null)
 
-  const save = useCallback(async (slot: SlotNumber) => {
-    if (!user || !romId || !romTitle) return
+  // Resolves true only once the save is in the cloud, so callers can tell a
+  // real save from a failed one (the error itself lands in `error`).
+  const save = useCallback(async (slot: SlotNumber): Promise<boolean> => {
+    if (!user || !romId || !romTitle) return false
     setBusy(true); setError(null)
     try {
       const rawBytes   = await exportState()
@@ -40,6 +42,9 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
         .upload(path, new Blob([compressed], { type: 'application/gzip' }), {
           upsert: true,
           contentType: 'application/gzip',
+          // Every save to a slot overwrites the same path; the default
+          // max-age=3600 would let browsers serve an older save from cache.
+          cacheControl: '0',
         })
       if (uploadError) throw uploadError
 
@@ -55,8 +60,10 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
           saved_at:     new Date().toISOString(),
         }, { onConflict: 'user_id,rom_id,slot_number' })
       if (upsertError) throw upsertError
+      return true
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed')
+      return false
     } finally {
       setBusy(false)
     }
@@ -68,7 +75,7 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
     try {
       const { data: row, error: selectError } = await requireSupabase()
         .from('saves')
-        .select('storage_path')
+        .select('storage_path, saved_at')
         .eq('user_id', user.id)
         .eq('rom_id', romId)
         .eq('slot_number', slot)
@@ -76,9 +83,12 @@ export function useCloudSave(user: AppUser | null, romId: string | null, romTitl
       if (selectError) throw selectError
       if (!row) { setError('No save in this slot'); return }
 
+      // Older uploads carry max-age=3600, so a browser that already fetched
+      // this slot would hand back that copy; key the request to this save and
+      // skip the HTTP cache so the latest save always comes down.
       const { data: blob, error: downloadError } = await requireSupabase().storage
         .from(BUCKET)
-        .download(row.storage_path)
+        .download(row.storage_path, { cacheNonce: String(row.saved_at) }, { cache: 'no-store' })
       if (downloadError) throw downloadError
 
       const compressed = new Uint8Array(await blob.arrayBuffer())

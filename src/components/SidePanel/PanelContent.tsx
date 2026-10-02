@@ -27,7 +27,7 @@ interface PanelContentProps {
   isMuted: boolean
   toggleMute: () => void
 
-  save: (slot: SlotNumber) => Promise<void>
+  save: (slot: SlotNumber) => Promise<boolean>
   load: (slot: SlotNumber) => Promise<void>
   listSlots: () => Promise<(SlotMeta | null)[]>
   busy: boolean
