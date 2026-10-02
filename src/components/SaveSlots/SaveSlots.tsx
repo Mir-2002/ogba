@@ -1,7 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import type { SlotNumber, SlotMeta } from '@/hooks/useCloudSave'
 
 interface Props {
+  // False while the panel is hidden (closed mobile drawer); the list is
+  // refetched each time it becomes true.
+  active?: boolean
   hasRom: boolean
   save: (slot: SlotNumber) => Promise<void>
   load: (slot: SlotNumber) => Promise<void>
@@ -17,20 +20,35 @@ function formatDate(d: Date) {
   return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
 }
 
-export function SaveSlots({ hasRom, save, load, listSlots, busy, error, listError }: Props) {
+export function SaveSlots({ active = true, hasRom, save, load, listSlots, busy, error, listError }: Props) {
   const [slots, setSlots] = useState<(SlotMeta | null)[]>([null, null, null])
   const [slotsLoading, setSlotsLoading] = useState(true)
   const [pendingLoad, setPendingLoad] = useState<SlotNumber | null>(null)
   const [lastSaved, setLastSaved] = useState<SlotNumber | null>(null)
 
+  // Sign-in and ROM restore each change listSlots, so several lists can be in
+  // flight at once; only the newest one may land, or a stale "all empty"
+  // result from before the user/ROM arrived can overwrite the real slots.
+  const requestRef = useRef(0)
   const refresh = useCallback(async () => {
+    const request = ++requestRef.current
     setSlotsLoading(true)
     const result = await listSlots()
+    if (request !== requestRef.current) return
     setSlots(result)
     setSlotsLoading(false)
   }, [listSlots])
 
-  useEffect(() => { refresh() }, [refresh])
+  // Saves can be made on another device at any time, so refetch whenever the
+  // slots come into view: the panel opening, or the app returning to the
+  // foreground (a backgrounded mobile PWA otherwise shows its old list).
+  useEffect(() => {
+    if (!active) return
+    refresh()
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [active, refresh])
 
   async function handleSave(slot: SlotNumber) {
     await save(slot)

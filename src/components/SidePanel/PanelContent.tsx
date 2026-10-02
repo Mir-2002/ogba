@@ -34,6 +34,9 @@ interface PanelContentProps {
   saveError: string | null
   listError: string | null
 
+  // False while the panel is hidden (closed mobile drawer).
+  active?: boolean
+
   // Mobile only — desktop has no skin.
   skin?: {
     name:       string | null
@@ -57,6 +60,7 @@ export function PanelContent({
   user, authLoading, authError, signIn, signOut,
   volume, setVolume, isMuted, toggleMute,
   save, load, listSlots, busy, saveError, listError,
+  active,
   skin,
 }: PanelContentProps) {
   return (
@@ -152,6 +156,7 @@ export function PanelContent({
       <section>
         {user ? (
           <SaveSlots
+            active={active}
             hasRom={state.hasRom}
             save={save}
             load={load}

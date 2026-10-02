@@ -46,7 +46,7 @@ export function SaveDrawer({ isOpen, onClose, ...panelProps }: SaveDrawerProps) 
         {/* Handle bar */}
         <div className="w-10 h-1 bg-muted/30 rounded-full mx-auto mb-4" />
 
-        <PanelContent {...panelProps} />
+        <PanelContent {...panelProps} active={isOpen} />
       </div>
     </>
   )
